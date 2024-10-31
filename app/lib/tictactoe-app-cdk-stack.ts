@@ -67,6 +67,10 @@ export class TictactoeAppCdkStack extends Stack {
       'USE_EC2_INSTANCE_METADATA=true python3 application.py --serverPort 8080'
     );
 
+    const securityGroup = new ec2.SecurityGroup(this, 'TicTacToeSecurityGroup', {
+      vpc
+    })
+
     const launchTemplate = new ec2.LaunchTemplate(this, 'TicTacToeLaunchTemplate', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
 
@@ -80,6 +84,8 @@ export class TictactoeAppCdkStack extends Stack {
 
       // script to automatically install the app at boot time 
       userData: installAppUserdata,
+
+      securityGroup: securityGroup
     })
 
     const asg = new autoscaling.AutoScalingGroup(this, 'TicTacToeASG', {
@@ -111,7 +117,6 @@ export class TictactoeAppCdkStack extends Stack {
       internetFacing: true
     });
 
-    /*
     // Add a listener and open up the load balancer's security group
     // to the world.
     const listener = lb.addListener('TicTacToeListener', {
@@ -130,7 +135,6 @@ export class TictactoeAppCdkStack extends Stack {
       stickinessCookieDuration: Duration.hours(1),
       targets: [asg]
     });    
-    */
 
     // output the Load Balancer DNS Name for easy retrieval
     new CfnOutput(this, 'LoadBalancerDNSName', { value: lb.loadBalancerDnsName });
