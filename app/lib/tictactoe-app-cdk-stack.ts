@@ -67,8 +67,7 @@ export class TictactoeAppCdkStack extends Stack {
       'USE_EC2_INSTANCE_METADATA=true python3 application.py --serverPort 8080'
     );
 
-    const asg = new autoscaling.AutoScalingGroup(this, 'TicTacToeASG', {
-      vpc,
+    const launchTemplate = new ec2.LaunchTemplate(this, 'TicTacToeLaunchTemplate', {
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
 
       // get the latest Amazon Linux 2023 image for ARM64 CPU 
@@ -81,6 +80,11 @@ export class TictactoeAppCdkStack extends Stack {
 
       // script to automatically install the app at boot time 
       userData: installAppUserdata,
+    })
+
+    const asg = new autoscaling.AutoScalingGroup(this, 'TicTacToeASG', {
+      vpc,
+      launchTemplate: launchTemplate,
 
       // for high availability 
       minCapacity: 2,
@@ -107,6 +111,7 @@ export class TictactoeAppCdkStack extends Stack {
       internetFacing: true
     });
 
+    /*
     // Add a listener and open up the load balancer's security group
     // to the world.
     const listener = lb.addListener('TicTacToeListener', {
@@ -125,6 +130,7 @@ export class TictactoeAppCdkStack extends Stack {
       stickinessCookieDuration: Duration.hours(1),
       targets: [asg]
     });    
+    */
 
     // output the Load Balancer DNS Name for easy retrieval
     new CfnOutput(this, 'LoadBalancerDNSName', { value: lb.loadBalancerDnsName });
@@ -132,6 +138,6 @@ export class TictactoeAppCdkStack extends Stack {
     // output for easy integration with other AWS services 
     new CfnOutput(this, 'ARNLoadBalancer', { value: lb.loadBalancerArn });
     new CfnOutput(this, 'HostedZoneLoadBalancer', { value: lb.loadBalancerCanonicalHostedZoneId });
-    new CfnOutput(this, 'ARNAutoScalingGroup', { value: asg.autoScalingGroupArn });
+//    new CfnOutput(this, 'ARNAutoScalingGroup', { value: asg.autoScalingGroupArn });
   }
 }
